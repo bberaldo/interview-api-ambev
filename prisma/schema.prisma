@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FindingType {
+  SAST
+  SCA
+}
+
+enum Classification {
+  P1
+  P2
+  P3
+  P4
+  P5
+}
+
+enum FindingStatus {
+  OPEN
+  FIXED
+  IGNORED
+}
+
+model Finding {
+  id         String @id @default(uuid())
+  externalId String @unique // ISS-000001 - id da api externa
+
+  type        FindingType
+  repository  String
+  branch      String
+  commit      String
+  language    String
+  category    String
+  title       String
+  description String
+  ruleId      String
+  file        String
+  line        Int
+  score       Int
+  status      FindingStatus
+  author      String
+
+  classification Classification // vai ser calculado na sinc
+
+  detectedAt      DateTime // dado da API externa
+  updatedAtSource DateTime // dado da API externa
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([repository])
+  @@index([type])
+  @@index([status])
+  @@index([classification])
+}

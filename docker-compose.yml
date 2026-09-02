@@ -1,0 +1,34 @@
+services:
+  api:
+    build: .
+    container_name: interview-api
+    ports:
+      - "3001:3000" # (host:container) fora é 3001, dentro continua 3000
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/interviewapi?schema=public
+      EXTERNAL_API_URL: http://host.docker.internal:3000 # API externa continua na 3000 do host
+      EXTERNAL_API_TOKEN: 550e8400-e29b-41d4-a716-446655440000
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: interview-api-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: interviewapi
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

@@ -169,6 +169,8 @@ Isso garante que executar `POST /sync` múltiplas vezes nunca duplica registros 
 
 Falhas de rede ao chamar a API externa têm retry automático (3 tentativas, com backoff simples) antes de propagar o erro.
 
+**Nota sobre performance**: avaliei paralelizar a busca de páginas da API externa (concorrência de 5 requisições simultâneas), mas medições comparativas no mesmo ambiente não mostraram ganho significativo (28.4s vs 29.6s, diferença dentro da margem de ruído) — indicando que o gargalo real está na escrita no banco (20.000 upserts), não na busca via rede. Mantida a versão sequencial por ser mais simples sem perda de performance.
+
 ---
 
 ## Regras de classificação

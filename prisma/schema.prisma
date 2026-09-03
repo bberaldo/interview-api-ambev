@@ -64,4 +64,5 @@ model Finding {
   @@index([type])
   @@index([status])
   @@index([classification])
+  @@index([type, status])
 }

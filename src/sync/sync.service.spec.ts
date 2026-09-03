@@ -1,6 +1,7 @@
-import { SyncService } from '../sync/sync.service';
+import { UnprocessableEntityException } from '@nestjs/common';
+import { SyncService } from './sync.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { ExternalApiClient } from '../sync/external-api.client';
+import { ExternalApiClient } from './external-api.client';
 
 describe('SyncService', () => {
   let service: SyncService;
@@ -9,7 +10,7 @@ describe('SyncService', () => {
 
   beforeEach(() => {
     prisma = {
-      finding: { upsert: jest.fn() },
+      finding: { upsert: jest.fn((args) => args) },
       $transaction: jest.fn().mockResolvedValue(undefined),
     };
     externalApi = { getPage: jest.fn() };
@@ -79,14 +80,32 @@ describe('SyncService', () => {
 
     await service.syncAll();
 
-    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     const upsertCalls = prisma.$transaction.mock.calls[0][0];
     expect(upsertCalls).toHaveLength(1);
+    expect(upsertCalls[0].create.classification).toBe('P1');
   });
 
   it('propaga erro se a API externa falhar', async () => {
     externalApi.getPage.mockRejectedValueOnce(new Error('timeout'));
 
     await expect(service.syncAll()).rejects.toThrow('timeout');
+  });
+
+  it('lança UnprocessableEntityException para type desconhecido', async () => {
+    externalApi.getPage.mockResolvedValueOnce({
+      page: 1, limit: 100, total: 1, totalPages: 1, hasNext: false, hasPrevious: false,
+      data: [mockFinding({ type: 'INVALID_TYPE' })],
+    });
+
+    await expect(service.syncAll()).rejects.toThrow(UnprocessableEntityException);
+  });
+
+  it('lança UnprocessableEntityException para status desconhecido', async () => {
+    externalApi.getPage.mockResolvedValueOnce({
+      page: 1, limit: 100, total: 1, totalPages: 1, hasNext: false, hasPrevious: false,
+      data: [mockFinding({ status: 'INVALID_STATUS' })],
+    });
+
+    await expect(service.syncAll()).rejects.toThrow(UnprocessableEntityException);
   });
 });

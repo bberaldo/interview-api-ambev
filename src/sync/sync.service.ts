@@ -1,4 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { ExternalApiClient } from './external-api.client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ExternalFinding } from './dto/external-finding.dto';
@@ -82,14 +86,18 @@ export class SyncService {
 
   private toFindingType(value: string): FindingType {
     if (!['SAST', 'SCA'].includes(value)) {
-      throw new Error(`Tipo de finding desconhecido: ${value}`);
+      throw new UnprocessableEntityException(
+        `Tipo de finding desconhecido: ${value}`,
+      );
     }
     return value as FindingType;
   }
 
   private toFindingStatus(value: string): FindingStatus {
     if (!['OPEN', 'FIXED', 'IGNORED'].includes(value)) {
-      throw new Error(`Status de finding desconhecido: ${value}`);
+      throw new UnprocessableEntityException(
+        `Status de finding desconhecido: ${value}`,
+      );
     }
     return value as FindingStatus;
   }
